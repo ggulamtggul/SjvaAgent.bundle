@@ -157,11 +157,15 @@ class ModuleMovie(AgentBase):
 
             # role
             metadata.roles.clear()
-            for item in meta_info['actor']:
-                actor = metadata.roles.new()
-                actor.role = item['role']
-                actor.name = item['name']
-                actor.photo = item['thumb']
+            for item in meta_info.get('actor') or ():
+                if not isinstance(item, dict):
+                    continue
+                display_name = item.get('name_ko') or item.get('name_org') or item.get('name') or item.get('name_en')
+                if display_name:
+                    actor = metadata.roles.new()
+                    actor.name = display_name
+                    actor.role = item.get('role') or item.get('name_org') or ''
+                    actor.photo = item.get('thumb') or item.get('photo') or item.get('image') or ''
 
             metadata.directors.clear()
             for item in meta_info['director']:
