@@ -28,12 +28,19 @@ class AgentShow(Agent.TV_Shows):
     def search(self, results, media, lang, manual):
         key = AgentBase.get_key(media)
         Log('Key : %s', key)
-        if manual and isinstance(media.show, (str, unicode)):
-            code = AgentBase.get_code_from_text(media.show)
-            if isinstance(code, (str, unicode)) and code.startswith(tuple(AgentBase.site_code_mapping.values())):
-                meta = MetadataSearchResult(id=code, name=code, year='', score=150, thumb="", lang=lang)
-                results.Append(meta)
-                return
+        if manual:
+            search_query = getattr(media, 'show', None) or getattr(media, 'name', None) or getattr(media, 'title', None)
+            if search_query and isinstance(search_query, (str, unicode)):
+                code = search_query.strip()
+                if code.startswith('YS') or code.startswith(tuple(AgentBase.site_code_mapping.values())):
+                    meta = MetadataSearchResult(id=code, name=code, year='', score=150, thumb="", lang=lang)
+                    results.Append(meta)
+                    return
+                code2 = AgentBase.get_code_from_text(search_query)
+                if code2 and (code2.startswith('YS') or code2.startswith(tuple(AgentBase.site_code_mapping.values()))):
+                    meta = MetadataSearchResult(id=code2, name=code2, year='', score=150, thumb="", lang=lang)
+                    results.Append(meta)
+                    return
         ret = self.instance_list['Y'].search(results, media, lang, manual)
         if ret and not manual:
             return

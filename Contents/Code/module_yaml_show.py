@@ -24,7 +24,7 @@ class ModuleYamlShow(ModuleYamlBase):
             data = self.yaml_load(filepath['show'])
             #Log(self.d(data))
             is_primary = self.get(data, 'primary', 'false')
-            if is_primary != 'true':
+            if not manual and is_primary != 'true':
                 return False
             timestamp = int(time.time())
             posters = self.get_media_list(data, 'posters')

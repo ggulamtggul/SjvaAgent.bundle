@@ -1,7 +1,9 @@
-VERSION = '2026.10.07.2'
+VERSION = '2026.10.07.3'
 
 """
-2026.10.07.2
+2026.10.07.3
+  - manual(일치 항목 수정) 검색 시 primary=false여도 로컬 show.yaml 결과 목록에 노출
+  - 검색창에 YS 코드 직접 입력 시 즉시 매칭
   - 수동 검색 시 YS 코드 검색 및 YAML 검색 결과 노출 보정 (movie 타입 오지정 제거)
   - title 누락 시 original_title 자동 fallback
   - KTV 스캐너 연도별 시즌(YYYYSS)과 show.yaml 단일 시즌 스마트 매핑
