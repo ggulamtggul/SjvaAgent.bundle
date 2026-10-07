@@ -60,8 +60,8 @@ class ModuleYamlShow(ModuleYamlBase):
             filepath_list = self.get_yaml_filepath(media, 'show')
             Log('YAML show : %s', filepath_list)
             # Y 면 기본적으로 어느정도 세팅한다... YD만 하지 말고
-            # 니미 너무 오래걸린다.
-            if is_primary and metadata.id.startswith('Y'):
+            # 니미 너무 오래걸린다. -> show.yaml에 정보가 완비되어 있으므로 불필요한 동기 API 호출 비활성화 (20분 병목 해소)
+            if False and is_primary and metadata.id.startswith('Y'):
                 metadata.title = media.title
                 index_list = [index for index in media.seasons]
                 index_list = sorted(index_list)
