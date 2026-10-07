@@ -1,7 +1,9 @@
-VERSION = '2026.10.07.1'
+VERSION = '2026.10.07.2'
 
 """
-2026.10.07.1
+2026.10.07.2
+  - 수동 검색 시 YS 코드 검색 및 YAML 검색 결과 노출 보정 (movie 타입 오지정 제거)
+  - title 누락 시 original_title 자동 fallback
   - KTV 스캐너 연도별 시즌(YYYYSS)과 show.yaml 단일 시즌 스마트 매핑
   - show.yaml 보조/단독 메타데이터 적용 시 에피소드 날짜 및 인덱스 스마트 매칭
   - show.yaml 매칭 시 에피소드 임시 파일명 조회 지연(20분 병목 루프) 비활성화

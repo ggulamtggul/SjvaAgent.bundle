@@ -32,17 +32,29 @@ class ModuleYamlShow(ModuleYamlBase):
             code = self.get(data, 'code', 'YS%s' % timestamp)
             if not code.startswith('YS'):
                 code = 'YS%s' % code
+            title_name = self.get(data, 'title', None)
+            if not title_name:
+                title_name = self.get(data, 'original_title', None)
+            if not title_name:
+                title_name = getattr(media, 'title', None) or (u'제목 - %s' % timestamp)
+
+            year_val = self.get(data, 'year', '')
+            if not year_val:
+                avail = self.get(data, 'originally_available_at', '')
+                if avail and len(str(avail)) >= 4 and str(avail)[:4].isdigit():
+                    year_val = str(avail)[:4]
+
+            score_val = 150 if manual else 100
             meta = MetadataSearchResult(
                 id=code,
-                name=self.get(data, 'title', u'제목 - %s' % timestamp),
-                year=self.get(data, 'year', ''),
-                score=100,
+                name=title_name,
+                year=year_val,
+                score=score_val,
                 thumb=thumb,
                 lang=lang
             )
             summary = self.get(data, 'summary', '')
             meta.summary = summary
-            meta.type = "movie"
             results.Append(meta)
             return True
         except Exception as exception:

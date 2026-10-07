@@ -77,7 +77,8 @@ class AgentBase(object):
         'tving': 'KV',
         'wavve': 'KW',
         'watcha': 'KX',
-        'tmdb': 'FT'
+        'tmdb': 'FT',
+        'yaml': 'YS'
     }
     site_code_ptn = Regex(r'\{(?P<site>[^-]+)-(?P<code>[^}]+)\}', re.IGNORECASE)
 
