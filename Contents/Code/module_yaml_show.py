@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import os, unicodedata, time, urllib2
+import os, unicodedata, time, urllib2, re
 from .agent_base import PutRequest
 from .module_yaml_base import ModuleYamlBase
 
@@ -162,12 +162,26 @@ class ModuleYamlShow(ModuleYamlBase):
                     Log('media_season_index is %s', media_season_index)
                     #Log('media_season_index is %s', type(media_season_index))
                     metadata_season = metadata.seasons[media_season_index]
-                    if str(media_season_index) not in data['seasons']:
+
+                    data_season = None
+                    s_str = str(media_season_index)
+                    if s_str in data['seasons']:
+                        data_season = data['seasons'][s_str]
+                    elif len(s_str) >= 5 and s_str.isdigit():
+                        # KTV 스캐너: YYYYSS 형태 (예: 201904 -> 시즌 4)
+                        clean_season = str(int(s_str[4:]))
+                        if clean_season in data['seasons']:
+                            data_season = data['seasons'][clean_season]
+
+                    # YAML에 시즌이 1개만 정의되어 있다면 단일 시즌 쇼로 간주하여 fallback 매칭
+                    if data_season is None and len(data['seasons']) == 1:
+                        data_season = list(data['seasons'].values())[0]
+
+                    if data_season is None:
                         continue
 
                     @task
-                    def UpdateSeason(metadata=metadata, data=data, media=media, metadata_season=metadata_season, media_season_index=media_season_index, is_primary=is_primary):
-                        data_season = data['seasons'][str(media_season_index)]
+                    def UpdateSeason(metadata=metadata, data=data, media=media, metadata_season=metadata_season, media_season_index=media_season_index, is_primary=is_primary, data_season=data_season):
                         value = self.get(data_season, 'title', None)
                         if value is not None:
                             #metadata_season.title = value
@@ -182,14 +196,56 @@ class ModuleYamlShow(ModuleYamlBase):
                         self.set_data_media(metadata_season, data_season, 'art', is_primary)
                         self.set_data_extras(metadata_season, data_season, 'extras', is_primary)
 
+                        if 'episodes' not in data_season:
+                            return
+
+                        # 방영일(YYYY-MM-DD) 매핑 테이블 구성
+                        episodes_by_date = {}
+                        for ep_idx, ep_val in data_season['episodes'].items():
+                            air_date = ep_val.get('originally_available_at')
+                            if air_date:
+                                episodes_by_date[str(air_date)] = ep_val
 
                         for media_episode_index in media.seasons[media_season_index].episodes:
                             metadata_episode = metadata.seasons[media_season_index].episodes[media_episode_index]
+                            media_episode = media.seasons[media_season_index].episodes[media_episode_index]
 
-                            if 'episodes' not in data_season or str(media_episode_index) not in data_season['episodes']:
+                            data_episode = None
+                            ep_str = str(media_episode_index)
+                            if ep_str in data_season['episodes']:
+                                data_episode = data_season['episodes'][ep_str]
+
+                            # 인덱스로 일치하지 않는 경우: 방영일로 매칭 시도
+                            if data_episode is None:
+                                # 1. metadata에 이미 방영일이 있는 경우 (KTV 등에서 먼저 설정된 경우)
+                                if hasattr(metadata_episode, 'originally_available_at') and metadata_episode.originally_available_at:
+                                    date_key = str(metadata_episode.originally_available_at)
+                                    if date_key in episodes_by_date:
+                                        data_episode = episodes_by_date[date_key]
+
+                                # 2. 파일명에서 날짜 추출 (YYMMDD or YYYYMMDD)
+                                if data_episode is None:
+                                    try:
+                                        parts = getattr(media_episode, 'all_parts', None)
+                                        if parts and callable(parts):
+                                            part_list = parts()
+                                            if part_list:
+                                                filename = os.path.basename(part_list[0].file)
+                                                m = re.search(r'(\d{6}|\d{8})', filename)
+                                                if m:
+                                                    d_str = m.group(1)
+                                                    if len(d_str) == 6:
+                                                        formatted_date = '20%s-%s-%s' % (d_str[0:2], d_str[2:4], d_str[4:6])
+                                                    else:
+                                                        formatted_date = '%s-%s-%s' % (d_str[0:4], d_str[4:6], d_str[6:8])
+                                                    if formatted_date in episodes_by_date:
+                                                        data_episode = episodes_by_date[formatted_date]
+                                    except Exception as ep_err:
+                                        Log.Debug('Episode date matching err: %s', str(ep_err))
+
+                            if data_episode is None:
                                 continue
 
-                            data_episode = data_season['episodes'][str(media_episode_index)]
                             #Log(self.d(data_episode))
 
                             self.set_data(metadata_episode, data_episode, 'title', is_primary)
