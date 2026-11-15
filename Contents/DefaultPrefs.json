@@ -13,7 +13,7 @@
 	},
 	{
 		"id": "timeout",
-		"label": "URL 요청 timeout (초, 최대 120)",
+		"label": "URL 요청 timeout (초, 최대 600)",
 		"type": "text",
 		"default": "30"
 	},
