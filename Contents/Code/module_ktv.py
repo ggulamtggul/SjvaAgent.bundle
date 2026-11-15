@@ -480,6 +480,11 @@ class ModuleKtv(AgentBase):
         search_title = media.title.replace(u'[종영]', '')
         search_title = search_title.split('|')[0].strip()
         main_meta_info = self.get_data_from_info_json(search_code, search_title, info_json, is_write_json)
+        if not main_meta_info or not isinstance(main_meta_info, dict):
+            # 서버가 빈 결과를 주면 기존 메타데이터를 지우지 않고 그대로 둔다
+            Log.Error("[%s] 메타데이터 조회 실패로 업데이트를 건너뜁니다: %s", media.id, search_code)
+            return
+        self.remove_metadata(metadata, media)
         Log.Debug("[%s] metadata code: %s", media.id, main_meta_info.get('code'))
         Log.Debug("[%s] metadata title: %s", media.id, main_meta_info.get('title'))
         Log.Debug("[%s] metadata summary: %s", media.id, main_meta_info.get('plot'))
@@ -527,7 +532,7 @@ class ModuleKtv(AgentBase):
         except Exception:
             Log.Exception("기본 정보 업데이트 실패")
 
-        series_data = (search_data.get('daum') or {}).get('series') or ()
+        series_data = ((search_data or {}).get('daum') or {}).get('series') or ()
 
         @parallelize
         def UpdateSeasons():

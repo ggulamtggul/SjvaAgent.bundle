@@ -186,7 +186,8 @@ class AgentBase(object):
     def my_JSON_ObjectFromURL(url, timeout=None, retry=1, method='GET', values=None):
         try:
             if timeout is None:
-                timeout = int(Prefs['timeout'])
+                # 단위는 초. 예전 기본값(3000)처럼 큰 값은 사실상 무제한이라 상한을 둔다
+                timeout = min(int(Prefs['timeout']), 120)
             return JSON.ObjectFromURL(url, timeout=timeout, method=method, values=values)
         except Exception as e:
             if retry < 4:
@@ -356,6 +357,12 @@ class AgentBase(object):
 
                 outfile.write(data)
             return True
+        except IOError as e:
+            if e.errno in (13, 30):
+                # 읽기 전용 경로: 매번 스택까지 찍을 일이 아니다
+                Log('info.json 저장 건너뜀 (쓰기 불가 경로): %s', ret)
+            else:
+                Log.Exception(str(e))
         except Exception as e:
             Log.Exception(str(e))
         return False
@@ -401,6 +408,12 @@ class AgentBase(object):
                     data = data.decode("utf-8")
                 outfile.write(data)
             return True
+        except IOError as e:
+            if e.errno in (13, 30):
+                # 읽기 전용 경로: 매번 스택까지 찍을 일이 아니다
+                Log('info.json 저장 건너뜀 (쓰기 불가 경로): %s', ret)
+            else:
+                Log.Exception(str(e))
         except Exception as e:
             Log.Exception(str(e))
         return False
