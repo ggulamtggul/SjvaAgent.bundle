@@ -187,7 +187,7 @@ class AgentBase(object):
         try:
             if timeout is None:
                 # 단위는 초. 예전 기본값(3000)처럼 큰 값은 사실상 무제한이라 상한을 둔다
-                timeout = min(int(Prefs['timeout']), 120)
+                timeout = min(int(Prefs['timeout']), 600)
             return JSON.ObjectFromURL(url, timeout=timeout, method=method, values=values)
         except Exception as e:
             if retry < 4:
