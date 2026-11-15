@@ -13,9 +13,9 @@
 	},
 	{
 		"id": "timeout",
-		"label": "URL 요청 timeout",
+		"label": "URL 요청 timeout (초, 최대 120)",
 		"type": "text",
-		"default": "3000"
+		"default": "30"
 	},
 	{
 		"id": "include_time_info",

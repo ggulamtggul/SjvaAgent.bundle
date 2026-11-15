@@ -32,7 +32,14 @@ class AgentShow(Agent.TV_Shows):
             search_query = getattr(media, 'show', None) or getattr(media, 'name', None) or getattr(media, 'title', None)
             if search_query and isinstance(search_query, (str, unicode)):
                 code = search_query.strip()
-                if code.startswith('YS') or code.startswith(tuple(AgentBase.site_code_mapping.values())):
+                # 코드 직접 입력: 접두어만 보면 'FT아일랜드' 같은 제목도 코드로 오인한다.
+                # 공백이 없어야 하고, YS 외에는 숫자가 들어 있어야 코드로 본다
+                is_code = code.startswith(tuple(AgentBase.site_code_mapping.values())) and not Regex(r'\s').search(code)
+                if is_code and not code.startswith('YS'):
+                    is_code = bool(Regex(r'\d').search(code))
+                elif is_code:
+                    is_code = len(code) > 2
+                if is_code:
                     meta = MetadataSearchResult(id=code, name=code, year='', score=150, thumb="", lang=lang)
                     results.Append(meta)
                     return
@@ -57,7 +64,9 @@ class AgentShow(Agent.TV_Shows):
 
     def update(self, metadata, media, lang):
         Log('update : %s', metadata.id)
-        self.instance_list[metadata.id[0]].remove_metadata(metadata, media)
+        # 국내 TV(K)는 서버 조회가 성공한 뒤 모듈 안에서 지운다. 조회 실패 때 기존 번들이 날아가지 않게
+        if metadata.id[0] != 'K':
+            self.instance_list[metadata.id[0]].remove_metadata(metadata, media)
         # 2022-02-06
         # 파일로 된 부가영상이 먼저 나오게 순서 변경
         # Y로 호출할 뿐 모듈은 상관 없음. static function
