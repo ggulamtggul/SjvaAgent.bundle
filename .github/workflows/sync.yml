@@ -1,0 +1,33 @@
+name: Sync Upstream
+
+on:
+  schedule:
+    # 매일 UTC 00:17 (한국시간 오전 09:17)
+    - cron: '17 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge halfaider/SjvaAgent.bundle
+        run: .github/scripts/sync_upstream.sh
+
+      # Plex 에이전트는 Python 2.7로 돈다. 문법이 깨진 코드가 서버로 내려가지 않게 푸시 전에 확인한다
+      - name: Python 2.7 syntax check
+        run: docker run --rm -v "$PWD":/w -w /w python:2.7-slim python -m compileall -q Contents/Code
+
+      - name: Push
+        run: git push origin HEAD:main
